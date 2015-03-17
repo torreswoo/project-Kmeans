@@ -3,7 +3,7 @@ package test_Kmeans02;
 import java.util.ArrayList;
 import java.util.List;
 
-class Kmeans{
+class Kmeans extends Thread{
 
 	private DataBaseManager db =null;
 	
@@ -18,10 +18,9 @@ class Kmeans{
 		
 	}
 	
-	public void mainloop(){
+	public void run(){
 		//1. DB에연결하여 대이터 전처리 
 		this.makeDataSet();
-		
 	
 		//2.클러스터알고리즘
 		this.setCount(10); // 개수설
@@ -188,7 +187,7 @@ class Kmeans{
 		for( List<Integer>list :clustered){
 			System.out.println("============clustered :"+list.size() + " =============");
 			for(Integer index : list){
-				System.out.println(dataset.get(index).getCourse_title() +" | ");
+				System.out.print(dataset.get(index).getCourse_title() +" | ");
 			}
 		}
 	}

@@ -18,7 +18,7 @@ public class testMain {
 				
 		//2. K means 알고리즘!
 		Kmeans kmeans = new Kmeans();
-		kmeans.mainloop();
+		kmeans.start();
 		
 	}
 }
