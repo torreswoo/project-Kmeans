@@ -5,14 +5,15 @@ import java.util.List;
 
 class Kmeans extends Thread{
 
+	private int CLURSTER =10; 
+	private int COUNT =10;
+	
+
 	private DataBaseManager db =null;
+	private CourseData[] centroids = null; // 각각의 클러스터의 중심점이 되는 강의정보 
+	private List<Integer>[] clusteredDataSet = null; // 클러스터된 강의들의 id와 매칭됨 			
+	private List<CourseData> dataset = new ArrayList<CourseData>(); // 전체 데이타 코스 
 	
-	private CourseData[] centroids = null;
-	private List<Integer>[] clusteredDataSet = null;
-	private List<CourseData> dataset = new ArrayList<CourseData>();
-	
-	private CourseData cd = new CourseData();
-	private int cnt; //반복횟수 지정 
 	
 	public Kmeans(){
 		
@@ -23,12 +24,7 @@ class Kmeans extends Thread{
 		this.makeDataSet();
 	
 		//2.클러스터알고리즘
-		this.setCount(10); // 개수설
-		this.cluseterAlgorithm(cnt);
-	}
-	
-	public void setCount(int cnt){
-		this.cnt = cnt;
+		this.cluseterAlgorithm(this.COUNT);
 	}
 	
 	public void makeDataSet(){  		//1. DB에연결하여 대이터 전처리 
@@ -52,13 +48,13 @@ class Kmeans extends Thread{
 	public void cluseterAlgorithm(int cnt){
 		
 		//main-1.초기에 중심설정 
-		this.centroids = this.firstCentroid(this.dataset, this.cnt);
+		this.centroids = this.firstCentroid(this.dataset, this.CLURSTER);
 		//main-2.클러스터!!
 		this.clusteredDataSet = this.nearestIds(this.dataset, this.centroids);
 		this.__printCheck(this.clusteredDataSet, this.dataset);
 		
 		//main-3 for문을 이용하여 반복적으로 새로운 중심점을 찾기
-		for(int i = 0 ; i<20 ; i++){
+		for(int i = 0 ; i<this.COUNT ; i++){
 			System.out.println("\r\n\r\n"+(i+1)+"th Clusterting==============");
 			this.centroids = this.newCentroid(clusteredDataSet, this.dataset);
 			this.clusteredDataSet = this.nearestIds(this.dataset, this.centroids);
@@ -76,7 +72,7 @@ class Kmeans extends Thread{
 		for( int i =0 ; i<dataset.size() ; i+=n){
 			if(index >= cnt) break;
 			centroid[index] = dataset.get(i);
-//			
+			
 //			System.out.println("cluseterAlgorithm() => firstCentroid()");
 //			System.out.print("id: "+ centroid[index].getCourse_id() +"   \t");
 //			for(int j = 0 ; j < 27 ; j++){
@@ -136,7 +132,6 @@ class Kmeans extends Thread{
 			int nearClusterId = this._nearestCluster(dataset.get(i), centroids);
 			clusteredDataSet[nearClusterId].add(i);
 		}
-	
 		return clusteredDataSet;
 	}
 
@@ -160,6 +155,7 @@ class Kmeans extends Thread{
 		double similarity = this._cosineDistance(data, center);
 		return similarity;
 	}
+	
 	private double _cosineDistance(CourseData data, CourseData center){
 		int size = data.getFeature().length;
 		double normA=0, normB=0, scla=0; 
@@ -171,7 +167,6 @@ class Kmeans extends Thread{
 		double similarity = scla / ( Math.sqrt(normA) * Math.sqrt(normB)  );
 		return similarity;
 	}
-	
 	
 /*	///////////////////////////////////////////////////////////////////////
 	public double _distance(CourseData data, CourseData center){
@@ -185,10 +180,11 @@ class Kmeans extends Thread{
 	
 	public void __printCheck(List<Integer>[] clustered, List<CourseData> dataset){
 		for( List<Integer>list :clustered){
-			System.out.println("============clustered :"+list.size() + " =============");
+			System.out.print("=clustered: "+list.size() +"  \t=> ");
 			for(Integer index : list){
 				System.out.print(dataset.get(index).getCourse_title() +" | ");
 			}
+			System.out.println();
 		}
 	}
 
