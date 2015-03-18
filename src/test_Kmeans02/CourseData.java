@@ -7,7 +7,6 @@ public class CourseData {
 	private double[] feature = new double[27];
 	
 	public CourseData(){
-		
 		for(int i = 0 ; i < 27 ; i++){
 			this.feature[i] = 0;
 		}

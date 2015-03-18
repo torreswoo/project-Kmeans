@@ -26,6 +26,18 @@ public class Course {
 
 	}
 
+	public void settingCourseInfo(int Course_Id, String Course_Title, String Course_Des, String Course_Thumbnail, String Course_Url, int Course_Category_Cnt, int Course_level, Vector<Long> Category_Cd){
+		this.Course_Category_Cnt = Course_Category_Cnt;
+		this.Course_Des = Course_Des;
+		this.Course_Id = Course_Id;
+		this.Course_Thumbnail = Course_Thumbnail;
+		this.Course_Title = Course_Title;
+		this.Course_Url = Course_Url;
+		this.Course_level = Course_level;
+		this.Category_Cd = Category_Cd;
+//		this.User_Type_Cd = User_Type_Cd;
+	}
+	
 	public Course(int Course_Id, String Course_Title, String Course_Des, String Course_Thumbnail, String Course_Url, int Course_Category_Cnt, int Course_level, Vector<Long> Category_Cd){
 		this.Course_Category_Cnt = Course_Category_Cnt;
 		this.Course_Des = Course_Des;

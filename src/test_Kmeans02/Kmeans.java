@@ -6,9 +6,8 @@ import java.util.List;
 class Kmeans extends Thread{
 
 	private int CLURSTER =10; 
-	private int COUNT =10;
+	private int COUNT =5;
 	
-
 	private DataBaseManager db =null;
 	private CourseData[] centroids = null; // 각각의 클러스터의 중심점이 되는 강의정보 
 	private List<Integer>[] clusteredDataSet = null; // 클러스터된 강의들의 id와 매칭됨 			
@@ -20,45 +19,66 @@ class Kmeans extends Thread{
 	}
 	
 	public void run(){
-		//1. DB에연결하여 대이터 전처리 
+		db = DataBaseManager.getInstance();
+		
+		//1. DB에연결하여 대이터 전처리  SELECT ( DB -> local)
 		this.makeDataSet();
 	
 		//2.클러스터알고리즘
-		this.cluseterAlgorithm(this.COUNT);
+		this.cluseterAlgorithm(this.COUNT);// 데이터를 local에서 계산
+		this.__printCheck(this.clusteredDataSet, this.dataset);
+		
+		
+//		int size = this.centroids.length;
+//		System.out.print("centroid: ");
+//		for(int i = 0 ; i < size ; ++i){
+//			for(int idx = 0 ; idx < 26 ; idx++){
+//				System.out.print(centroids[i].getFeature()[idx+1]+",");
+//			}
+//			System.out.println();
+//		}
+		
+
+		//3. DB에 연결하여 결과를 INSERT( local -> DB )
+		this.saveDataSet();
+		
 	}
 	
 	public void makeDataSet(){  		//1. DB에연결하여 대이터 전처리 
 		
-		db = DataBaseManager.getInstance();
-		this.dataset = db.setting_CourseData(); //DB정보로 코스정보를 세팅
+		this.dataset = this.db.making_CourseData(); //DB정보로 코스정보를 세팅
 												// dataset이 메모리에 올라옴!
-		for(int j = 0 ; j < this.dataset.size() ; j++){
-			System.out.println("id:"+dataset.get(j).getCourse_id()+", title: "+dataset.get(j).getCourse_title() );
-			for(int i = 0 ; i < 27 ; i++){
-				System.out.print(dataset.get(j).getFeatureIdx(i)+ ", ");
-			}
-			System.out.println();
-		}
-		
-		System.out.println(this.dataset.size());
+//		for(int j = 0 ; j < this.dataset.size() ; j++){
+//			System.out.println("id:"+dataset.get(j).getCourse_id()+", title: "+dataset.get(j).getCourse_title() );
+//			for(int i = 0 ; i < 27 ; i++){
+//				System.out.print(dataset.get(j).getFeatureIdx(i)+ ", ");
+//			}
+//			System.out.println();
+//		}		
+//		System.out.println(this.dataset.size());
 	}
 	
 	
-	//*  main 알고리*//					//2.클러스터알고리즘
+	public void saveDataSet(){
+		db.saving_Cluster(centroids, clusteredDataSet, dataset);		
+	}
+	
+	
+	//*  main 알고리즘  *//					//2.클러스터알고리즘
 	public void cluseterAlgorithm(int cnt){
 		
 		//main-1.초기에 중심설정 
 		this.centroids = this.firstCentroid(this.dataset, this.CLURSTER);
 		//main-2.클러스터!!
 		this.clusteredDataSet = this.nearestIds(this.dataset, this.centroids);
-		this.__printCheck(this.clusteredDataSet, this.dataset);
+	//	this.__printCheck(this.clusteredDataSet, this.dataset);
 		
 		//main-3 for문을 이용하여 반복적으로 새로운 중심점을 찾기
 		for(int i = 0 ; i<this.COUNT ; i++){
-			System.out.println("\r\n\r\n"+(i+1)+"th Clusterting==============");
 			this.centroids = this.newCentroid(clusteredDataSet, this.dataset);
 			this.clusteredDataSet = this.nearestIds(this.dataset, this.centroids);
-			this.__printCheck(this.clusteredDataSet, this.dataset);
+	//		System.out.println("\r\n\r\n"+(i+1)+"th Clusterting==============");			
+	//		this.__printCheck(this.clusteredDataSet, this.dataset);
 		}
 	}
 	
@@ -72,13 +92,6 @@ class Kmeans extends Thread{
 		for( int i =0 ; i<dataset.size() ; i+=n){
 			if(index >= cnt) break;
 			centroid[index] = dataset.get(i);
-			
-//			System.out.println("cluseterAlgorithm() => firstCentroid()");
-//			System.out.print("id: "+ centroid[index].getCourse_id() +"   \t");
-//			for(int j = 0 ; j < 27 ; j++){
-//				System.out.print(centroid[index].getFeatureIdx(j) + ", ");
-//			}
-//			System.out.println();
 			index++;
 		}
 		return centroid;
@@ -179,10 +192,16 @@ class Kmeans extends Thread{
 	*/	
 	
 	public void __printCheck(List<Integer>[] clustered, List<CourseData> dataset){
+		
 		for( List<Integer>list :clustered){
 			System.out.print("=clustered: "+list.size() +"  \t=> ");
 			for(Integer index : list){
-				System.out.print(dataset.get(index).getCourse_title() +" | ");
+		//		System.out.print(dataset.get(index).getCourse_title() +" | ");
+				System.out.print(dataset.get(index).getCourse_id() +" | ");
+		//		System.out.print("index:"+ index+", ");
+		//		for(int idx = 0 ; idx < 26 ; idx++){
+		//			System.out.print(dataset.get(index).getFeatureIdx(idx+1) +" | ");
+		//		}
 			}
 			System.out.println();
 		}
