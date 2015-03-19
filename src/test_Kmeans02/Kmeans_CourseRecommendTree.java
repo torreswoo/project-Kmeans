@@ -11,6 +11,7 @@ public class Kmeans_CourseRecommendTree {
 	private List<CourseData> dataset = new ArrayList<CourseData>(); // 전체 데이타 코스 
 	private List<User_Interest> user = new ArrayList<User_Interest>();
 	
+	
 	public Kmeans_CourseRecommendTree(CourseData[] centroids, List<Integer>[] clusteredDataSet, List<CourseData> dataset, List<User_Interest> user){
 		this.centroids  = centroids;
 		this.clusteredDataSet = clusteredDataSet;
@@ -21,7 +22,7 @@ public class Kmeans_CourseRecommendTree {
 	public void start(){
 		db = DataBaseManager.getInstance();
 		db.clear_Course_Recommend_TreeTable();
-		
+		CourseRecommendTree courspick_root = new CourseRecommendTree();
 		for(int i = 0 ; i < user.size() ; i++){ // 모든 유저에 대해 반목적인 작업을 수
 			
 			int min_cluster = 0;
@@ -35,7 +36,7 @@ public class Kmeans_CourseRecommendTree {
 				}
 			}
 			
-			CourseRecommendTree courspick_root = new CourseRecommendTree();
+			//CourseRecommendTree courspick_root = new CourseRecommendTree();
 			courspick_root.setting(centroids[min_cluster].getCourse_title() ,
 								  centroids[min_cluster].getCourse_Url(),
 								  user.get(i).getUser_Id(),
@@ -71,22 +72,28 @@ public class Kmeans_CourseRecommendTree {
 				}																																																																											
 			}
 			
+			
 			//3.선택된 3개의 강좌를 쏘아줘!
 			for(int idx = 0 ; idx < 3 ; idx++){
+				if(dataset.get(max_sim_course[idx]).getCourse_id() != courspick_root.getCourse_Id() ){
 				CourseRecommendTree courspick_lv1 = new CourseRecommendTree();
 				courspick_lv1.setting(dataset.get(max_sim_course[idx]).getCourse_title() ,
 									  dataset.get(max_sim_course[idx]).getCourse_Url(),
 									  user.get(i).getUser_Id(),
 									  dataset.get(max_sim_course[idx]).getCourse_id(),
 									  max_sim[idx]*2800,
-									  1);	courspick_lv1.setTree_pid(1);
-				db.saving_Course_Recommend_Tree(courspick_lv1);
+									  1);	courspick_lv1.setTree_pid(courspick_root.getCourse_Id());
+									  
+				if( courspick_lv1.getTree_pid() != courspick_lv1.getCourse_Id()){
+					db.saving_Course_Recommend_Tree(courspick_lv1);
+				}
 			//	System.out.println("courspick_lv1 : "+courspick_lv1.getTree_pid());
 				
 				//4. 각 강좌를 기반으로 2단계를 진행... courspick_lv1 
 				// min_cluster에 속한 강좌만 유사도를 비교해서 상위 3개만 선택!
 				double max_sim_lv1[] = new double[3];	max_sim_lv1[0] = 0;max_sim_lv1[1] = 0; max_sim_lv1[2] = 0;
 				int max_sim_course_lv1[] = new int[3];
+				
 				for(int idx_lv1 = 0 ; idx_lv1 < dataset.size() ; idx_lv1++){ //상위3개만선
 					if(dataset.get(idx_lv1).getCluster_id()== min_cluster ){// 클러스터가 가장 먼강좌들만 
 						double sim = _similarity( user.get(i), dataset.get(idx_lv1) );
@@ -109,15 +116,19 @@ public class Kmeans_CourseRecommendTree {
 					}																																																																											
 				}
 				for(int idx_lv1 = 0 ; idx_lv1 < 3 ; idx_lv1++){
+					if(dataset.get(max_sim_course_lv1[idx_lv1]).getCourse_id() != courspick_lv1.getCourse_Id() ){
 					CourseRecommendTree courspick_lv2 = new CourseRecommendTree();
 					courspick_lv2.setting(dataset.get(max_sim_course_lv1[idx_lv1]).getCourse_title() ,
 										  dataset.get(max_sim_course_lv1[idx_lv1]).getCourse_Url(),
 										  user.get(i).getUser_Id(),
 										  dataset.get(max_sim_course_lv1[idx_lv1]).getCourse_id(),
 										  max_sim_lv1[idx_lv1]*2800,
-										  2);	courspick_lv2.setTree_pid(2);
-					db.saving_Course_Recommend_Tree(courspick_lv2);
+										  2);	courspick_lv2.setTree_pid(courspick_lv1.getCourse_Id());
 					
+				//	if
+					if( courspick_lv2.getTree_pid() != courspick_lv2.getCourse_Id()){
+						db.saving_Course_Recommend_Tree(courspick_lv2);
+					}
 					//
 					//5. 각 강좌를 기반으로 2단계를 진행... courspick_lv1 
 					// min_cluster에 속한 강좌만 유사도를 비교해서 상위 3개만 선택!
@@ -145,20 +156,24 @@ public class Kmeans_CourseRecommendTree {
 						}																																																																											
 					}
 					for(int idx_lv2 = 0 ; idx_lv2 < 3 ; idx_lv2++){
+						if(dataset.get(max_sim_course_lv2[idx_lv2]).getCourse_id() != courspick_lv2.getCourse_Id() ){
 						CourseRecommendTree courspick_lv3 = new CourseRecommendTree();
 						courspick_lv3.setting(dataset.get(max_sim_course_lv2[idx_lv2]).getCourse_title() ,
 											  dataset.get(max_sim_course_lv2[idx_lv2]).getCourse_Url(),
 											  user.get(i).getUser_Id(),
 											  dataset.get(max_sim_course_lv2[idx_lv2]).getCourse_id(),
 											  max_sim_lv2[idx_lv2]*2800,
-											  3);	courspick_lv3.setTree_pid(3);
-						db.saving_Course_Recommend_Tree(courspick_lv3);
+											  3);	courspick_lv3.setTree_pid(courspick_lv2.getCourse_Id());
+						if( courspick_lv3.getTree_pid() != courspick_lv3.getCourse_Id()){					  
+							db.saving_Course_Recommend_Tree(courspick_lv3);
+						}
 					}
 					
 					
 				}
 			}
 		}
+		}}}
 		
 	}
 	

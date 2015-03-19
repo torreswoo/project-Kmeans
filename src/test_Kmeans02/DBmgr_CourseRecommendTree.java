@@ -67,7 +67,7 @@ public class DBmgr_CourseRecommendTree {
 			
 			int result = pstmt.executeUpdate();
 		    if(result ==1){
-		//	    System.out.println("DataBaseManager(insert into Cluster_Course) 성공 ");
+			    System.out.println("DataBaseManager(insert into Cluster_Course) 성공 ");
 		    }
 		    else{
 		     	System.out.println("DataBaseManager(insert into insert_Course_Recommend_Tree) 실패 ");
