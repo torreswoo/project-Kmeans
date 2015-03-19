@@ -4,8 +4,10 @@ public class CourseData {
 
 	private String Course_title;
 	private int Course_id;
+	private int Course_recTree_id; // 트리를 만들기 위해 가장 멀리있는 군
 	private int Cluster_id;
 	private int Cluster_Course_Cnt;
+	private String Course_Url;
 	
 	private double[] feature = new double[27];
 	
@@ -20,6 +22,12 @@ public class CourseData {
 		}
 	}
 
+	public String getCourse_Url() {
+		return Course_Url;
+	}
+	public void setCourse_Url(String course_Url) {
+		Course_Url = course_Url;
+	}
 	public int getCluster_id() {
 		return Cluster_id;
 	}
@@ -64,4 +72,12 @@ public class CourseData {
 	public double getFeatureIdx(int idx){
 		return this.feature[idx];
 	}
+	public int getCourse_recTree_id() {
+		return Course_recTree_id;
+	}
+	public void setCourse_recTree_id(int course_recTree_id) {
+		Course_recTree_id = course_recTree_id;
+	}
+
+
 }

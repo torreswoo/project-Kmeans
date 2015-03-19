@@ -26,7 +26,7 @@ public class DBmgr_UserCluster {
             instance = new DBmgr_UserCluster();
         }
         return instance;
-  }
+	}
 
 	
 	public void connect(Connection conn){

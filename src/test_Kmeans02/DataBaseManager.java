@@ -21,6 +21,7 @@ public class DataBaseManager {
 	
 	private static DataBaseManager instance = null;
 	private DBmgr_UserCluster db_user = null;
+	private DBmgr_CourseRecommendTree db_courspick = null;
 	
 	private Connection conn = null;
 	private String URL = "jdbc:mysql://175.126.56.188:3306/courspick";
@@ -30,8 +31,6 @@ public class DataBaseManager {
 	PreparedStatement pstmt = null;
 	Statement st = null;
 	ResultSet rs = null;	
-	
-	
 	
 	
 	public DataBaseManager(){
@@ -51,8 +50,10 @@ public class DataBaseManager {
 			Class.forName("com.mysql.jdbc.Driver");
 			conn = DriverManager.getConnection(URL, id, pw);
 			
-			DBmgr_UserCluster  db_user = new DBmgr_UserCluster();///
+//			DBmgr_UserCluster db_user = new DBmgr_UserCluster();///
 			db_user.getInstance().connect(conn);
+			db_courspick.getInstance().connect(conn);
+			
 		
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -62,8 +63,12 @@ public class DataBaseManager {
 			System.out.println("SQLState: " + sqex.getSQLState());
 		}
 	}
-	
-	
+	public void saving_Course_Recommend_Tree(CourseRecommendTree courspick){
+		this.db_courspick.getInstance().insert_Course_Recommend_Tree(courspick);
+	}
+	public void clear_Course_Recommend_TreeTable(){
+		this.db_courspick.getInstance().delete_Course_Recommend_Tree();
+	}
 	// User_Interest : DB -> local : User_Interset객체로 
 	public List<User_Interest> making_User_Interest(){
 		List<User_Interest> result_dataset = new ArrayList<User_Interest>(); 
@@ -124,7 +129,7 @@ public class DataBaseManager {
 				pstmt.setInt(1, dataset.get(i).getCluster_id() );		
 				pstmt.setInt(2, dataset.get(i).getCourse_id() );
 				
-				System.out.println("getCourse_id: " + dataset.get(i).getCourse_id() +", getCluster_id"+ dataset.get(i).getCluster_id());		
+			//	System.out.println("getCourse_id: " + dataset.get(i).getCourse_id() +", getCluster_id"+ dataset.get(i).getCluster_id());		
 				
 			    int result = pstmt.executeUpdate();
 			    if(result ==1){
@@ -284,6 +289,7 @@ public class DataBaseManager {
 				data.clear();
 				data.setCourse_id(rs.getInt("Course_Id"));
 				data.setCourse_title(rs.getString("course_title"));
+				data.setCourse_Url(rs.getString("Course_Url"));
 				int cnt = rs.getInt("Category_Cnt");
 				
 				String sql2 = "select * from Course_Category where Course_Id=?";
@@ -391,6 +397,5 @@ public class DataBaseManager {
 		}
 		   
 	}
-	
 	
 }

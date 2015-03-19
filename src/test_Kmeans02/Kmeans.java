@@ -12,7 +12,7 @@ class Kmeans extends Thread{
 	private CourseData[] centroids = null; // 각각의 클러스터의 중심점이 되는 강의정보 
 	private List<Integer>[] clusteredDataSet = null; // 클러스터된 강의들의 id와 매칭됨 			
 	private List<CourseData> dataset = new ArrayList<CourseData>(); // 전체 데이타 코스 
-	
+	private List<User_Interest> user = new ArrayList<User_Interest>();
 	
 	public Kmeans(){
 		
@@ -34,9 +34,15 @@ class Kmeans extends Thread{
 
 		
 		//4. User_Interest테이블에 가장유사한것으로 업데이트
-		List<User_Interest> user = this.makeUserInteresetDataSet();//1.
+		this.user = this.makeUserInteresetDataSet();//1.
 		user = this.nearestClusterIds(user, this.centroids);
 		this.saveUserInterestDataSet(user);		//saveing
+		
+		//5. sjr 테이블에 정보를 insert
+		Kmeans_CourseRecommendTree kmeans_courspick = new Kmeans_CourseRecommendTree(this.centroids, this.clusteredDataSet, this.dataset,  this.user);
+		kmeans_courspick.start();
+		
+		
 		
 	}
 	
@@ -208,7 +214,10 @@ class Kmeans extends Thread{
 		for(int i = 0 ; i <dataset.size() ; i++){
 			int nearClusterId = this._nearestCluster(dataset.get(i), centroids);
 			clusteredDataSet[nearClusterId].add(i);
-			dataset.get(i).setCluster_id(nearClusterId);
+			dataset.get(i).setCluster_id(nearClusterId);  // 가장 가까운 군집의 정보를 업데이트
+			
+			int farClusterId = this._farestCluster(dataset.get(i), centroids);
+			dataset.get(i).setCourse_recTree_id(farClusterId);  // 가장 멀리있는 군집의 정보를 업데이트
 		}
 		return clusteredDataSet;
 	}
@@ -221,6 +230,20 @@ class Kmeans extends Thread{
 		for(int i = 0 ; i <centroids.length ; i++){
 			temp = this._similarity(item, centroids[i]);// 유사도 비교!
 			if(temp > distance){
+				distance = temp; 	
+				pos = index;
+			}
+			index++;
+		}
+		return pos;
+	}
+	public int _farestCluster(CourseData item, CourseData[] centroids){
+		double distance=9999, temp=0;
+		int index=0, pos=0;
+		
+		for(int i = 0 ; i <centroids.length ; i++){
+			temp = this._similarity(item, centroids[i]);// 유사도 비교!
+			if(temp < distance){
 				distance = temp; 	
 				pos = index;
 			}
