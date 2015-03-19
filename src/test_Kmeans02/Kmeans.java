@@ -5,8 +5,8 @@ import java.util.List;
 
 class Kmeans extends Thread{
 
-	private int CLURSTER =10; 
-	private int COUNT =5;
+	private int CLURSTER =9;  //군집개
+	private int COUNT =12;  //반복횟수 
 	
 	private DataBaseManager db =null;
 	private CourseData[] centroids = null; // 각각의 클러스터의 중심점이 되는 강의정보 
@@ -18,7 +18,7 @@ class Kmeans extends Thread{
 		
 	}
 	
-	public void run(){
+	public void run(){//Thread가 실행되는 기본로직 
 		db = DataBaseManager.getInstance();
 		
 		//1. DB에연결하여 대이터 전처리  SELECT ( DB -> local)
@@ -26,40 +26,105 @@ class Kmeans extends Thread{
 	
 		//2.클러스터알고리즘
 		this.cluseterAlgorithm(this.COUNT);// 데이터를 local에서 계산
-		this.__printCheck(this.clusteredDataSet, this.dataset);
-		
-		
-//		int size = this.centroids.length;
-//		System.out.print("centroid: ");
-//		for(int i = 0 ; i < size ; ++i){
-//			for(int idx = 0 ; idx < 26 ; idx++){
-//				System.out.print(centroids[i].getFeature()[idx+1]+",");
-//			}
-//			System.out.println();
-//		}
-		
 
+				
 		//3. DB에 연결하여 결과를 INSERT( local -> DB )
 		this.saveDataSet();
+		this.__printCheck(this.clusteredDataSet, this.dataset);
+
+		
+		//4. User_Interest테이블에 가장유사한것으로 업데이트
+		List<User_Interest> user = this.makeUserInteresetDataSet();//1.
+		user = this.nearestClusterIds(user, this.centroids);
+		this.saveUserInterestDataSet(user);		//saveing
 		
 	}
 	
+	////////////////////////////////////////////////////////////////
+	public void saveUserInterestDataSet(List<User_Interest> user){
+		db.saving_User_Interest(user);
+	}
+	
+	public List<User_Interest> makeUserInteresetDataSet(){
+		return db.making_User_Interest();
+	}
+	//
+	
+	public List<User_Interest> nearestClusterIds(List<User_Interest> user, CourseData[] centroids){
+
+		for(int i = 0 ; i <user.size() ; i++){
+			int nearClusterId = this._nearestCluster(user.get(i), centroids);
+			user.get(i).setCluster_Id(nearClusterId);
+		}
+		return user;
+	}
+	
+	
+	public int _nearestCluster(User_Interest item, CourseData[] centroids){
+		double distance=0, temp=0;
+		int index=0, pos=0;
+		
+		for(int i = 0 ; i <centroids.length ; i++){
+			temp = this._similarity(item, centroids[i]);// 유사도 비교!
+			if(temp > distance){
+				distance = temp; 	
+				pos = index;
+			}
+			index++;
+		}
+		return pos;
+	}
+	
+	public void saveUserClusterDataSet(){
+		
+	}
+
+	public double _similarity(User_Interest data, CourseData center){
+		double similarity = this._cosineDistance(data, center);
+		return similarity;
+	}
+	
+	private double _cosineDistance(User_Interest data, CourseData center){
+		int size = data.getFeature().length;
+		double normA=0, normB=0, scla=0; 
+		for(int i = 0 ; i < size ; i++){
+			normA += (data.getFeature()[i]*data.getFeature()[i]);
+			normB += (center.getFeature()[i]*center.getFeature()[i]);
+			scla += (data.getFeature()[i]*center.getFeature()[i]); 
+		}
+		double similarity = scla / ( Math.sqrt(normA) * Math.sqrt(normB)  );
+		return similarity;
+	}
+	
+	
+	
+	///////////////////////////////////////////////////////////////
 	public void makeDataSet(){  		//1. DB에연결하여 대이터 전처리 
 		
 		this.dataset = this.db.making_CourseData(); //DB정보로 코스정보를 세팅
 												// dataset이 메모리에 올라옴!
-//		for(int j = 0 ; j < this.dataset.size() ; j++){
-//			System.out.println("id:"+dataset.get(j).getCourse_id()+", title: "+dataset.get(j).getCourse_title() );
-//			for(int i = 0 ; i < 27 ; i++){
-//				System.out.print(dataset.get(j).getFeatureIdx(i)+ ", ");
-//			}
-//			System.out.println();
-//		}		
-//		System.out.println(this.dataset.size());
 	}
 	
 	
 	public void saveDataSet(){
+		// DB에
+		for(int i = 0 ; i<this.CLURSTER ; i++){
+			double interest[] = new double[26];
+			double temp_i=0.0;
+			int Cluster_i=0;
+			for(int idx = 0 ; idx < 26 ; idx++){
+				interest[idx] = this.centroids[i].getFeature()[idx+1];
+			//	System.out.print(interest[idx]+",");
+				if(temp_i < interest[idx]){
+					temp_i = interest[idx];
+					Cluster_i = idx+1; // 클러스터의 대표 i를 업데이트 
+				}
+			}
+			String Cluster_Title = this.db.select_Category(Cluster_i);
+			this.centroids[i].setCourse_title(Cluster_Title); //
+					
+			this.centroids[i].setCluster_Course_Cnt( clusteredDataSet[i].size() );
+		}
 		db.saving_Cluster(centroids, clusteredDataSet, dataset);		
 	}
 	
@@ -114,7 +179,7 @@ class Kmeans extends Thread{
 		}
 		return centroid;
 	}
-	public static void divideVectorEachElement( CourseData divided, double val ){
+	public void divideVectorEachElement( CourseData divided, double val ){
 		int size = divided.getFeature().length;//??
 		for(int i =0 ; i< size ; i++){
 			double v = (double)divided.getFeature()[i];
@@ -122,14 +187,13 @@ class Kmeans extends Thread{
 		}
 	}
 	
-	public static void sumVectorEachElement( CourseData added, CourseData val){
+	public void sumVectorEachElement( CourseData added, CourseData val){
 		int size = val.getFeature().length;//??
 		for(int i = 0 ; i<(size) ; i++){
 			double sum = added.getFeature()[i];
 			double v = val.getFeature()[i];
 			added.getFeature()[i] = v+sum;
 		}		
-		added.setCourse_title("clustered");
 	}	
 	
 	//main-2.클러스터!!  
@@ -144,6 +208,7 @@ class Kmeans extends Thread{
 		for(int i = 0 ; i <dataset.size() ; i++){
 			int nearClusterId = this._nearestCluster(dataset.get(i), centroids);
 			clusteredDataSet[nearClusterId].add(i);
+			dataset.get(i).setCluster_id(nearClusterId);
 		}
 		return clusteredDataSet;
 	}
@@ -196,8 +261,8 @@ class Kmeans extends Thread{
 		for( List<Integer>list :clustered){
 			System.out.print("=clustered: "+list.size() +"  \t=> ");
 			for(Integer index : list){
-		//		System.out.print(dataset.get(index).getCourse_title() +" | ");
-				System.out.print(dataset.get(index).getCourse_id() +" | ");
+				System.out.print(dataset.get(index).getCourse_title() +" | ");
+		//		System.out.print(dataset.get(index).getCourse_id() +" | ");
 		//		System.out.print("index:"+ index+", ");
 		//		for(int idx = 0 ; idx < 26 ; idx++){
 		//			System.out.print(dataset.get(index).getFeatureIdx(idx+1) +" | ");
